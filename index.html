@@ -235,6 +235,27 @@
             gap: 1vw;
             border: 0.3vw solid #ffcc00;
             box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+            position: relative; /* 作为提示框的定位父容器 */
+        }
+
+        /* 复制成功提示框 */
+        .copy-toast {
+            position: absolute;
+            top: -2vw;
+            right: 0;
+            background-color: #00cc00;
+            color: #fff;
+            padding: 0.5vw 1.5vw;
+            border-radius: 0.5vw;
+            font-size: 1.2vw;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none; /* 不影响点击 */
+        }
+
+        .copy-toast.show {
+            opacity: 1;
         }
 
         /* 二维码样式 */
@@ -305,6 +326,12 @@
                 padding: 5vw;
             }
 
+            .copy-toast {
+                top: -5vw;
+                font-size: 3vw;
+                padding: 2vw 4vw;
+            }
+
             .qrcode-img {
                 width: 40vw;
                 height: 40vw;
@@ -337,9 +364,11 @@
     <!-- 弹窗 -->
     <div class="modal-overlay" id="modalOverlay">
         <div class="modal-content">
+            <!-- 复制成功提示 -->
+            <div class="copy-toast" id="copyToast">复制成功！</div>
             <img src="./qrcode.png" alt="二维码" class="qrcode-img">
             <div class="url-container">
-                <input type="text" value="https://aftreecn.githu.io/New_Years_Countdown" readonly class="url-text" id="urlInput">
+                <input type="text" value="https://aftreecn.github.io/New_Years_Countdown/" readonly class="url-text" id="urlInput">
                 <button class="modal-btn copy-btn" id="copyBtn">复制</button>
             </div>
             <button class="modal-btn close-btn" id="closeBtn">关闭</button>
@@ -472,6 +501,7 @@
         const closeBtn = document.getElementById('closeBtn');
         const copyBtn = document.getElementById('copyBtn');
         const urlInput = document.getElementById('urlInput');
+        const copyToast = document.getElementById('copyToast');
 
         // 打开弹窗
         infoBtn.addEventListener('click', () => {
@@ -490,26 +520,32 @@
             }
         });
 
-        // 复制网址功能
+        // 复制网址功能（修复版）
         copyBtn.addEventListener('click', async () => {
             try {
-                // 选中输入框内容并复制
-                urlInput.select();
+                // 方案1：使用Clipboard API（优先）
                 await navigator.clipboard.writeText(urlInput.value);
                 
-                // 提示复制成功
-                const originalText = copyBtn.textContent;
-                copyBtn.textContent = '复制成功！';
-                copyBtn.style.backgroundColor = '#00cc00';
-                
-                // 恢复按钮文字
+                // 显示复制成功提示
+                copyToast.classList.add('show');
+                // 2秒后隐藏提示
                 setTimeout(() => {
-                    copyBtn.textContent = originalText;
-                    copyBtn.style.backgroundColor = '#cc0000';
-                }, 1500);
+                    copyToast.classList.remove('show');
+                }, 2000);
+
             } catch (err) {
-                alert('复制失败，请手动复制！');
-                console.error('复制失败:', err);
+                // 方案2：降级方案（兼容旧浏览器）
+                urlInput.select();
+                urlInput.setSelectionRange(0, 99999); // 移动端兼容
+                document.execCommand('copy');
+                
+                // 显示复制成功提示
+                copyToast.classList.add('show');
+                setTimeout(() => {
+                    copyToast.classList.remove('show');
+                }, 2000);
+                
+                console.log('使用降级方案复制:', err);
             }
         });
     </script>
